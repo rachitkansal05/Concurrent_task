@@ -1,0 +1,25 @@
+{
+  "name": "@concurrent/core",
+  "version": "0.1.0",
+  "description": "Shared types, interfaces, and utilities for Concurrent",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "pino": "^9.0.0",
+    "yaml": "^2.4.0",
+    "dotenv": "^16.4.0",
+    "zod": "^3.23.0",
+    "nanoid": "^5.0.0"
+  }
+}

@@ -1,0 +1,30 @@
+procedure:
+  name: "Submit Expense Report"
+  version: "1.0.0"
+  description: "Standard operating procedure to log into corporate portal and file an expense report"
+  triggers:
+    - "expense report"
+    - "submit expenses"
+    - "file expenses"
+  systems:
+    - "expenses.internal.com"
+  riskLevel: "medium"
+  steps:
+    - id: 1
+      description: "Log into expense management system"
+      tool: "browser.navigate"
+      params:
+        url: "https://expenses.internal.com"
+      expected: "Expense dashboard is loaded"
+    - id: 2
+      description: "Click New Report button"
+      tool: "browser.click"
+      params:
+        selector: "#new-report"
+      dependsOn: [1]
+      expected: "New report form opened"
+  verification:
+    - check: "Confirmation page shows report ID"
+      tool: "browser.extract"
+      params:
+        selector: ".confirmation-id"

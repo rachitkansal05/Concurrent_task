@@ -1,0 +1,110 @@
+# Permission Policy
+# =============================================================================
+# Defines what the AI operator is allowed to do automatically vs.
+# what requires human approval. Rules are evaluated in order — first match wins.
+#
+# Levels:
+#   allow             — execute automatically, no approval needed
+#   require_approval  — pause and ask for human approval before executing
+#   deny              — never execute (will be skipped/error)
+#
+# Risk-level rules apply when a task is classified at that risk level.
+# A higher risk level can escalate a normally-allowed action to require_approval.
+# =============================================================================
+
+name: company-default-policy
+
+defaultLevel: require_approval
+
+riskLevelRules:
+  low: allow
+  medium: allow
+  high: require_approval
+  critical: require_approval
+
+rules:
+  # ── READ-ONLY: always allow ──────────────────────────────────────────────
+  - toolPattern: browser.navigate
+    level: allow
+    reason: Read-only navigation is safe
+
+  - toolPattern: browser.extract
+    level: allow
+    reason: Data extraction is read-only
+
+  - toolPattern: browser.screenshot
+    level: allow
+    reason: Screenshots are read-only
+
+  - toolPattern: browser.wait
+    level: allow
+    reason: Wait is passive
+
+  - toolPattern: filesystem.read
+    level: allow
+    reason: Read-only file access is safe
+
+  - toolPattern: filesystem.list
+    level: allow
+    reason: Directory listing is read-only
+
+  - toolPattern: filesystem.exists
+    level: allow
+    reason: Existence check is read-only
+
+  # ── WRITE ACTIONS: require approval ─────────────────────────────────────
+  - toolPattern: browser.click
+    level: allow
+    reason: In-page clicks are generally safe; high-risk tasks will escalate
+
+  - toolPattern: browser.type
+    level: allow
+    reason: Typing into forms is generally safe
+
+  - toolPattern: browser.download
+    level: allow
+    reason: Downloading files is generally safe
+
+  - toolPattern: filesystem.write
+    level: require_approval
+    reason: Writing files requires approval
+
+  - toolPattern: filesystem.delete
+    level: require_approval
+    reason: File deletion is irreversible — always requires approval
+
+  - toolPattern: filesystem.move
+    level: require_approval
+    reason: Moving files requires approval
+
+  # ── COMMUNICATION: require approval ─────────────────────────────────────
+  - toolPattern: email.send
+    level: require_approval
+    reason: External email requires explicit human approval
+
+  - toolPattern: email.reply
+    level: require_approval
+    reason: Email replies require approval
+
+  - toolPattern: notify.send
+    level: allow
+    reason: Internal notifications (Slack/Teams) are low-risk
+
+  # ── CLI: always require approval ─────────────────────────────────────────
+  - toolPattern: cli.execute
+    level: require_approval
+    reason: Shell command execution requires approval — high security risk
+
+  # ── DESKTOP: always require approval ────────────────────────────────────
+  - toolPattern: desktop.*
+    level: require_approval
+    reason: Desktop UI automation requires approval
+
+  # ── DOCUMENT GENERATION: require approval ───────────────────────────────
+  - toolPattern: document.generate
+    level: require_approval
+    reason: Document creation requires review before saving
+
+  - toolPattern: document.parse
+    level: allow
+    reason: Parsing (reading) documents is safe

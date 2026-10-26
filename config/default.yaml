@@ -1,0 +1,40 @@
+app:
+  name: "concurrent"
+  version: "0.1.0"
+  environment: "development"
+  logLevel: "info"
+
+llm:
+  provider: "openai"
+  model: "gpt-4o"
+  maxTokens: 4096
+  temperature: 0.2
+
+execution:
+  maxConcurrentTasks: 3
+  maxRetriesPerStep: 3
+  maxRetriesPerTask: 10
+  stepTimeoutMs: 60000
+  dryRun: false
+
+approval:
+  requireApprovalFor:
+    - "high"
+    - "critical"
+  approvalTimeoutMinutes: 30
+  autoApproveLowRisk: true
+
+browser:
+  headless: true
+  navigationTimeoutMs: 30000
+  allowedDomains: []
+  screenshotEveryStep: true
+
+filesystem:
+  allowedPaths: []
+  evidenceDir: "./evidence"
+
+context:
+  proceduresDir: "./config/procedures"
+  knowledgeDir: "./knowledge"
+  vectorStore: "memory"

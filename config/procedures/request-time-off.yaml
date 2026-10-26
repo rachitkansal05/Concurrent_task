@@ -1,0 +1,77 @@
+# Procedure: Request Time Off
+# =============================================================================
+# This playbook guides the AI operator through submitting a leave request
+# via the HR portal.
+# =============================================================================
+
+procedure:
+  name: Request Time Off
+  description: >
+    Navigates to the HR portal, fills in a leave request with the requested
+    dates and type, submits it, and notifies the manager via email.
+  triggers:
+    - request time off
+    - book leave
+    - apply for leave
+    - request vacation
+    - take days off
+    - book holiday
+    - annual leave request
+    - sick leave request
+    - submit leave request
+  systems:
+    - hr-portal
+    - email
+  riskLevel: low
+  steps:
+    - id: 1
+      description: Navigate to the HR portal leave request section
+      tool: browser.navigate
+      params:
+        url: https://hr.internal.com/leave/new
+    - id: 2
+      description: Select the leave type
+      tool: browser.click
+      params:
+        selector: "#leave-type"
+        wait: true
+      dependsOn: [1]
+    - id: 3
+      description: Fill in the start date
+      tool: browser.type
+      params:
+        selector: "#start-date"
+        text: "{{context.startDate}}"
+      dependsOn: [2]
+    - id: 4
+      description: Fill in the end date
+      tool: browser.type
+      params:
+        selector: "#end-date"
+        text: "{{context.endDate}}"
+      dependsOn: [2]
+    - id: 5
+      description: Submit the leave request
+      tool: browser.click
+      params:
+        selector: "#submit-leave"
+        wait: true
+      dependsOn: [3, 4]
+    - id: 6
+      description: Extract the leave request confirmation number
+      tool: browser.extract
+      params:
+        selector: ".leave-id"
+      dependsOn: [5]
+    - id: 7
+      description: Take screenshot of the confirmation
+      tool: browser.screenshot
+      params:
+        fullPage: false
+      dependsOn: [5]
+  verification:
+    - check: Leave request confirmation number is displayed
+      tool: browser.extract
+      params:
+        selector: ".leave-id"
+      expected: "^LV-"

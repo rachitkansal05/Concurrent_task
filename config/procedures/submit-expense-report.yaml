@@ -1,0 +1,86 @@
+# Procedure: Submit Expense Report
+# =============================================================================
+# This playbook guides the AI operator through submitting an employee
+# expense report using the internal expense portal.
+#
+# Triggers: phrases that should activate this procedure.
+# Systems: which internal systems are involved (matched against entities.yaml).
+# =============================================================================
+
+procedure:
+  name: Submit Expense Report
+  description: >
+    Logs into the company expense portal, navigates to the expense submission
+    form, fills in the required fields, attaches receipts, and submits the report.
+    Sends a confirmation email to the requesting employee.
+  triggers:
+    - submit expense report
+    - file expense report
+    - expense report
+    - submit expenses
+    - file my expenses
+    - send expense report to finance
+    - expense submission
+    - claim expenses
+  systems:
+    - expense-portal
+    - email
+  riskLevel: medium
+  steps:
+    - id: 1
+      description: Navigate to the company expense portal
+      tool: browser.navigate
+      params:
+        url: https://expenses.internal.com
+    - id: 2
+      description: Click the "New Report" button to start a new expense report
+      tool: browser.click
+      params:
+        selector: "#new-report"
+        wait: true
+      dependsOn: [1]
+    - id: 3
+      description: Fill in the report name field with the current period
+      tool: browser.type
+      params:
+        selector: "#report-name"
+        text: "{{context.period}} Expense Report"
+      dependsOn: [2]
+    - id: 4
+      description: Click Submit to submit the expense report
+      tool: browser.click
+      params:
+        selector: "#submit-report"
+        wait: true
+      dependsOn: [3]
+    - id: 5
+      description: Extract the confirmation ID from the success page
+      tool: browser.extract
+      params:
+        selector: ".confirmation-id"
+      dependsOn: [4]
+    - id: 6
+      description: Take a screenshot of the confirmation page as evidence
+      tool: browser.screenshot
+      params:
+        fullPage: false
+      dependsOn: [4]
+    - id: 7
+      description: Send confirmation email to the requesting employee
+      tool: email.send
+      params:
+        to: "{{context.requestedBy.email}}"
+        subject: "Expense Report Submitted — {{step_5.output.text}}"
+        body: "Your expense report has been submitted. Confirmation ID: {{step_5.output.text}}"
+      dependsOn: [5]
+      requiresApproval: false
+  verification:
+    - check: Confirmation page shows a valid report ID
+      tool: browser.extract
+      params:
+        selector: ".confirmation-id"
+      expected: "^EXP-"
+    - check: Confirmation email was sent successfully
+      tool: email.send
+      params: {}
+      expected: sent

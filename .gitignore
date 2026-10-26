@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Compilation outputs & caches
+dist/
+coverage/
+*.tsbuildinfo
+.tsbuildinfo
+
+# Internal planning & development work logs
+PLAN.md
+.agents/
+
+# Runtime storage & evidence outputs
+data/
+evidence/
+tmp/
+*.log
+
+# Environment variables & local secrets
+.env
+.env.local
+.env.*.local
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini

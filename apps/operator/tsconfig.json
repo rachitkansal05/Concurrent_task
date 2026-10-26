@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/planner" },
+    { "path": "../../packages/tools" },
+    { "path": "../../packages/context" },
+    { "path": "../../packages/verifier" },
+    { "path": "../../packages/orchestrator" },
+    { "path": "../../packages/gateway" },
+    { "path": "../../packages/audit" }
+  ],
+  "include": ["src/**/*.ts"]
+}

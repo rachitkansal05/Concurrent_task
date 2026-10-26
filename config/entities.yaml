@@ -1,0 +1,122 @@
+# Company Entity Graph
+# =============================================================================
+# This file defines the company's people, internal systems, and their
+# relationships. It is loaded by the Context Engine to resolve entity
+# references in task requests (e.g., "email John" → john.smith@company.com).
+#
+# HOW TO UPDATE:
+#   - Add/edit entries here and restart the operator (or call engine.reloadEntities())
+#   - IDs must be unique within each section
+#   - aliases are used for fuzzy NL matching
+# =============================================================================
+
+people:
+  - id: alice.smith
+    name: Alice Smith
+    email: alice.smith@company.com
+    role: Chief Financial Officer
+    department: Finance
+    team: Leadership
+    aliases: [alice, cfo, alice smith]
+
+  - id: bob.jones
+    name: Bob Jones
+    email: bob.jones@company.com
+    role: Finance Manager
+    department: Finance
+    team: Accounts
+    manager: alice.smith
+    aliases: [bob, finance manager, bob jones]
+
+  - id: carol.dev
+    name: Carol Dev
+    email: carol.dev@company.com
+    role: Software Engineer
+    department: Engineering
+    team: Platform
+    manager: david.lead
+    aliases: [carol, engineer]
+
+  - id: david.lead
+    name: David Lead
+    email: david.lead@company.com
+    role: Engineering Lead
+    department: Engineering
+    team: Platform
+    aliases: [david, lead, engineering lead]
+
+  - id: hr.team
+    name: HR Team
+    email: hr@company.com
+    role: Human Resources
+    department: HR
+    aliases: [hr, human resources, people team]
+
+systems:
+  - id: expense-portal
+    name: Expense Portal
+    url: https://expenses.internal.com
+    authMethod: oauth
+    owner: Finance
+    description: Internal system for submitting and tracking employee expense reports
+    aliases: [expenses, expense system, expense portal, concur]
+
+  - id: jira
+    name: Jira
+    url: https://company.atlassian.net
+    authMethod: oauth
+    owner: Engineering
+    description: Issue tracking and project management
+    aliases: [jira, tickets, issue tracker, atlassian]
+
+  - id: slack
+    name: Slack
+    url: https://company.slack.com
+    authMethod: oauth
+    owner: IT
+    description: Company messaging and notifications platform
+    aliases: [slack, chat, messaging]
+
+  - id: sharepoint
+    name: SharePoint
+    url: https://company.sharepoint.com
+    authMethod: saml
+    owner: IT
+    description: Document management and intranet portal
+    aliases: [sharepoint, intranet, documents, docs]
+
+  - id: hr-portal
+    name: HR Portal
+    url: https://hr.internal.com
+    authMethod: saml
+    owner: HR
+    description: HR self-service system for leave, payroll, and benefits
+    aliases: [hr portal, hr system, bamboohr, workday, leave system]
+
+  - id: email
+    name: Corporate Email
+    authMethod: oauth
+    owner: IT
+    description: Microsoft 365 / Exchange corporate email
+    aliases: [email, outlook, mail, exchange]
+
+relationships:
+  - from: alice.smith
+    to: bob.jones
+    type: manages
+
+  - from: david.lead
+    to: carol.dev
+    type: manages
+
+  - from: bob.jones
+    to: expense-portal
+    type: owns_system
+
+  - from: alice.smith
+    to: expense-portal
+    type: approves_for
+
+  - from: carol.dev
+    to: david.lead
+    type: submits_to

@@ -1,0 +1,21 @@
+{
+  "name": "@concurrent/tools",
+  "version": "0.1.0",
+  "description": "Tool Execution Layer for browser, desktop, files, and APIs",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@concurrent/core": "*",
+    "playwright": "^1.44.0"
+  }
+}

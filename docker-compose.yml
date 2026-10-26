@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  operator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: concurrent-operator:latest
+    container_name: concurrent_operator
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - CONCURRENT_ENV=production
+      - CONCURRENT_VAULT_KEY=${CONCURRENT_VAULT_KEY:-concurrent-production-secure-vault-key-32-byte!}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+      - ./evidence:/app/evidence
+      - ./workspace:/app/workspace
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"

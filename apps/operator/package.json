@@ -1,0 +1,25 @@
+{
+  "name": "@concurrent/operator",
+  "version": "0.1.0",
+  "description": "Main CLI and Operator entry point for Concurrent AI Employee",
+  "type": "module",
+  "bin": {
+    "concurrent": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@concurrent/core": "*",
+    "@concurrent/planner": "*",
+    "@concurrent/tools": "*",
+    "@concurrent/context": "*",
+    "@concurrent/verifier": "*",
+    "@concurrent/orchestrator": "*",
+    "@concurrent/gateway": "*",
+    "@concurrent/audit": "*"
+  }
+}
