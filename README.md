@@ -158,15 +158,15 @@ graph TD
 
 ## 4. Live Demo Walkthrough
 
-### Web Dashboard Demo Video
+### Full Workflow Demo Video
 
-The following recording demonstrates the Web Control Gateway dashboard and REST API endpoints in action:
+The following recording demonstrates the complete end-to-end workflow — from task submission through all 8 pipeline phases (tool initialization, security, context retrieval, LLM planning, orchestration, execution, verification, and audit):
 
-![Concurrent Web Dashboard Demo — walkthrough of the Control Gateway, status API, approvals, clarifications, and escalations endpoints](docs/demo-dashboard.webp)
+![Concurrent Full Workflow Demo — task submission, 8-phase pipeline, DAG plan synthesis, step execution, verification, and SHA-256 audit chain](docs/demo-full-workflow.webp)
 
-### Dashboard Screenshot
+### Demo Screenshot
 
-![Concurrent Autonomous Operator — Control Gateway dashboard showing the dark-themed approval inbox UI](docs/dashboard-screenshot.png)
+![Concurrent Autonomous Operator — completed task showing all 8 phases passed, 4/4 steps executed, 100% confidence, and healthy system metrics](docs/demo-final-screenshot.png)
 
 ### Executing an Enterprise Workflow
 

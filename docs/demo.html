@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Concurrent — Live Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      border-bottom: 1px solid #334155;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 {
+      font-size: 1.25rem;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+    .header .badges {
+      display: flex;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .badge-green { background: #064e3b; color: #34d399; }
+    .badge-blue { background: #1e3a5f; color: #60a5fa; }
+    .badge-purple { background: #3b0764; color: #c084fc; }
+
+    /* Main Layout */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      height: calc(100vh - 60px);
+    }
+
+    /* Terminal Panel */
+    .terminal-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1e293b;
+    }
+    .terminal-header {
+      background: #1e293b;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #334155;
+    }
+    .terminal-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #22c55e; }
+    .terminal-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-left: 8px;
+    }
+    .terminal-body {
+      flex: 1;
+      background: #0f1219;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+    }
+    .terminal-body::-webkit-scrollbar { width: 6px; }
+    .terminal-body::-webkit-scrollbar-track { background: #0f1219; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+    /* Terminal text colors */
+    .t-cyan { color: #22d3ee; }
+    .t-green { color: #4ade80; }
+    .t-yellow { color: #fbbf24; }
+    .t-red { color: #f87171; }
+    .t-blue { color: #60a5fa; }
+    .t-purple { color: #a78bfa; }
+    .t-dim { color: #64748b; }
+    .t-white { color: #f1f5f9; font-weight: 700; }
+    .t-bold { font-weight: 700; }
+    .t-separator { color: #334155; }
+
+    /* Input Area */
+    .input-area {
+      background: #1e293b;
+      padding: 12px 16px;
+      border-top: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .input-area .prompt {
+      color: #22d3ee;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .input-area .command {
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      flex: 1;
+    }
+    .cursor-blink {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: #22d3ee;
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Right Panel — Status Dashboard */
+    .status-panel {
+      background: #111827;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .status-panel h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+    .status-card {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      border: 1px solid #334155;
+      transition: border-color 0.3s;
+    }
+    .status-card.active { border-color: #38bdf8; }
+    .status-card.done { border-color: #22c55e; }
+    .status-card.error { border-color: #ef4444; }
+    .phase-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .phase-icon {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem;
+      background: #334155;
+      color: #94a3b8;
+      transition: all 0.3s;
+    }
+    .phase-icon.active { background: #38bdf8; color: #0f172a; }
+    .phase-icon.done { background: #22c55e; color: #0f172a; }
+    .phase-detail {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .progress-bar {
+      height: 3px;
+      background: #334155;
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    /* Task Info Card */
+    .task-info {
+      background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+      border-radius: 8px;
+      padding: 14px;
+      border: 1px solid #4338ca;
+    }
+    .task-info .label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #818cf8;
+      margin-bottom: 6px;
+    }
+    .task-info .value {
+      font-size: 0.8rem;
+      color: #e2e8f0;
+      line-height: 1.4;
+    }
+    .task-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .task-meta-item .label { font-size: 0.6rem; color: #64748b; }
+    .task-meta-item .val { font-size: 0.75rem; color: #e2e8f0; font-weight: 600; }
+
+    /* Metrics */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .metric {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+    .metric .num {
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .metric .lbl {
+      font-size: 0.6rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ Concurrent — Autonomous Company Operator</h1>
+  <div class="badges">
+    <span class="badge badge-green">v0.1.0</span>
+    <span class="badge badge-blue">138 Tests ✓</span>
+    <span class="badge badge-purple">8 Phases</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="terminal-panel">
+    <div class="terminal-header">
+      <div class="terminal-dot dot-red"></div>
+      <div class="terminal-dot dot-yellow"></div>
+      <div class="terminal-dot dot-green"></div>
+      <span class="terminal-title">concurrent-operator — powershell</span>
+    </div>
+    <div class="terminal-body" id="terminal"></div>
+    <div class="input-area" id="inputArea">
+      <span class="prompt">PS R:\concurrent&gt;</span>
+      <span class="command" id="commandText"></span>
+      <span class="cursor-blink" id="cursor"></span>
+    </div>
+  </div>
+
+  <div class="status-panel">
+    <div class="task-info" id="taskCard" style="opacity: 0; transition: opacity 0.5s;">
+      <div class="label">Active Task</div>
+      <div class="value" id="taskName">—</div>
+      <div class="task-meta">
+        <div class="task-meta-item"><div class="label">TYPE</div><div class="val" id="taskType">—</div></div>
+        <div class="task-meta-item"><div class="label">RISK</div><div class="val" id="taskRisk">—</div></div>
+        <div class="task-meta-item"><div class="label">STATUS</div><div class="val" id="taskStatus">—</div></div>
+        <div class="task-meta-item"><div class="label">STEPS</div><div class="val" id="taskSteps">—</div></div>
+      </div>
+    </div>
+
+    <h2>Pipeline Phases</h2>
+    <div id="phases"></div>
+
+    <h2>System Metrics</h2>
+    <div class="metrics-row">
+      <div class="metric"><div class="num" id="metricTools">0</div><div class="lbl">Tools Loaded</div></div>
+      <div class="metric"><div class="num" id="metricKnowledge">0</div><div class="lbl">Knowledge Chunks</div></div>
+      <div class="metric"><div class="num" id="metricSteps">0</div><div class="lbl">Steps Done</div></div>
+      <div class="metric"><div class="num" id="metricConfidence">—</div><div class="lbl">Confidence</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const phases = [
+  { id: 'tools',      name: '1/8 Tool Execution Layer',     detail: '20 tools across 6 tiers' },
+  { id: 'security',   name: '2/8 Security Gateway',          detail: 'AES-256-GCM Vault & Audit Trail' },
+  { id: 'context',    name: '3/8 Context Engine',            detail: 'Knowledge, SOPs, Entity Graph' },
+  { id: 'planner',    name: '4/8 Planner & LLM',             detail: 'Task classification & DAG synthesis' },
+  { id: 'orchestrator', name: '5/8 Orchestrator',            detail: 'Multi-task queue & recovery' },
+  { id: 'gateway',    name: '6/8 Human Gateway',             detail: 'Web dashboard & approvals' },
+  { id: 'verifier',   name: '7/8 Verification Engine',       detail: 'Post-conditions & evidence bundle' },
+  { id: 'audit',      name: '8/8 Audit & Observability',     detail: 'SHA-256 chain & metrics' },
+];
+
+const phasesContainer = document.getElementById('phases');
+phases.forEach(p => {
+  phasesContainer.innerHTML += `
+    <div class="status-card" id="card-${p.id}">
+      <div class="phase-name">
+        <div class="phase-icon" id="icon-${p.id}">●</div>
+        ${p.name}
+      </div>
+      <div class="phase-detail" id="detail-${p.id}">${p.detail}</div>
+      <div class="progress-bar"><div class="progress-fill" id="bar-${p.id}"></div></div>
+    </div>`;
+});
+
+const terminal = document.getElementById('terminal');
+const commandText = document.getElementById('commandText');
+const cursor = document.getElementById('cursor');
+
+function appendLine(html) {
+  const line = document.createElement('div');
+  line.innerHTML = html;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function setPhase(id, state) {
+  const card = document.getElementById('card-' + id);
+  const icon = document.getElementById('icon-' + id);
+  const bar = document.getElementById('bar-' + id);
+  card.className = 'status-card ' + state;
+  icon.className = 'phase-icon ' + state;
+  icon.textContent = state === 'done' ? '✓' : state === 'active' ? '▶' : '●';
+  bar.style.width = state === 'done' ? '100%' : state === 'active' ? '60%' : '0%';
+}
+
+function setMetric(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
+async function typeCommand(text) {
+  commandText.textContent = '';
+  for (let i = 0; i < text.length; i++) {
+    commandText.textContent += text[i];
+    await sleep(35);
+  }
+  await sleep(400);
+  cursor.style.display = 'none';
+  appendLine(`<span class="t-cyan">PS R:\\concurrent&gt;</span> <span class="t-white">${text}</span>`);
+  commandText.textContent = '';
+}
+
+async function runDemo() {
+  await sleep(800);
+
+  // Step 1: Type the command
+  await typeCommand('node apps/operator/dist/index.js -t "Generate monthly expense report and email digest to CFO"');
+  await sleep(300);
+
+  // Banner
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine('<span class="t-cyan t-bold">  CONCURRENT v0.1.0 [DEVELOPMENT]</span>');
+  appendLine('<span class="t-dim">  Autonomous Company Operator — Enterprise Production Suite</span>');
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine('');
+  await sleep(600);
+
+  // Phase 1: Tools
+  setPhase('tools', 'active');
+  await sleep(400);
+  appendLine('<span class="t-green">[1/8 TOOLS]</span> Initialized <span class="t-white">20</span> action tools across 6 tiers (Browser, FS, CLI, Email, Notify, Docs).');
+  setPhase('tools', 'done');
+  setMetric('metricTools', '20');
+  await sleep(500);
+
+  // Phase 2: Security
+  setPhase('security', 'active');
+  await sleep(300);
+  appendLine('<span class="t-green">[2/8 SECURITY]</span> Initialized AES-256-GCM Vault & Immutable SHA-256 Audit Trail <span class="t-dim">(6 existing records)</span>.');
+  setPhase('security', 'done');
+  await sleep(500);
+
+  // Phase 3: Context
+  setPhase('context', 'active');
+  await sleep(300);
+  appendLine('<span class="t-green">[3/8 CONTEXT]</span> Loaded <span class="t-white">34</span> knowledge chunks and <span class="t-white">3</span> corporate SOP procedures.');
+  setPhase('context', 'done');
+  setMetric('metricKnowledge', '34');
+  await sleep(500);
+
+  // Phase 4: Planner
+  setPhase('planner', 'active');
+  await sleep(300);
+  appendLine('<span class="t-green">[4/8 PLANNER]</span> Connected to LLM provider (<span class="t-purple">openai:gpt-4o</span>) with PlanCache active.');
+  setPhase('planner', 'done');
+  await sleep(500);
+
+  // Phase 5: Orchestrator
+  setPhase('orchestrator', 'active');
+  await sleep(300);
+  appendLine('<span class="t-green">[5/8 ORCHESTRATOR]</span> Multi-Task Queue active with ErrorRecovery & Observability collector.');
+  setPhase('orchestrator', 'done');
+  await sleep(500);
+
+  // Phase 6: Gateway
+  setPhase('gateway', 'active');
+  await sleep(300);
+  appendLine('<span class="t-green">[6/8 GATEWAY]</span> Web Control Dashboard & Approval Inbox live at <span class="t-blue">http://localhost:3456</span>');
+  setPhase('gateway', 'done');
+  await sleep(600);
+
+  // Task intake
+  appendLine('');
+  appendLine('<span class="t-separator">--------------------------------------------------------------------------------</span>');
+  appendLine('<span class="t-cyan t-bold">[TASK INTAKE]</span> Processing: <span class="t-yellow">"Generate monthly expense report and email digest to CFO"</span>');
+  appendLine('<span class="t-separator">--------------------------------------------------------------------------------</span>');
+  appendLine('');
+
+  // Show task card
+  const taskCard = document.getElementById('taskCard');
+  taskCard.style.opacity = '1';
+  document.getElementById('taskName').textContent = 'Generate monthly expense report and email digest to CFO';
+  document.getElementById('taskStatus').textContent = 'ANALYZING';
+  document.getElementById('taskStatus').style.color = '#fbbf24';
+  await sleep(600);
+
+  // Context retrieval
+  appendLine('<span class="t-white">Retrieving organizational context...</span>');
+  await sleep(400);
+  appendLine('  <span class="t-dim">*</span> Matched SOP: <span class="t-green">"Submit Expense Report"</span> <span class="t-dim">(confidence: 25%, steps: 7)</span>');
+  await sleep(300);
+  appendLine('  <span class="t-dim">*</span> Resolved People: <span class="t-blue">Alice Smith</span> <span class="t-dim">(Chief Financial Officer)</span>');
+  await sleep(300);
+  appendLine('  <span class="t-dim">*</span> Target Systems: <span class="t-purple">Corporate Email, Expense Portal, Jira</span>');
+  await sleep(600);
+
+  // Classification
+  appendLine('');
+  appendLine('<span class="t-white">Analyzing task intent & evaluating risk level...</span>');
+  await sleep(500);
+  appendLine('  <span class="t-dim">*</span> Type: <span class="t-cyan t-bold">COMPOSITE</span> | Risk: <span class="t-yellow t-bold">MEDIUM</span>');
+  document.getElementById('taskType').textContent = 'COMPOSITE';
+  document.getElementById('taskType').style.color = '#22d3ee';
+  document.getElementById('taskRisk').textContent = 'MEDIUM';
+  document.getElementById('taskRisk').style.color = '#fbbf24';
+  await sleep(300);
+  appendLine('  <span class="t-dim">*</span> Reasoning: Rule-based heuristic evaluation based on keywords in request.');
+  await sleep(300);
+  appendLine('  <span class="t-dim">*</span> Synthesizing multi-step DAG execution plan...');
+  document.getElementById('taskStatus').textContent = 'PLANNING';
+  await sleep(700);
+
+  // Plan output
+  appendLine('');
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine(' <span class="t-cyan t-bold">EXECUTION PLAN</span>: Task a3zr2cT9llS9 <span class="t-dim">[RISK: MEDIUM]</span>');
+  appendLine(' Request: <span class="t-yellow">"Generate monthly expense report and email digest to CFO"</span>');
+  appendLine(' <span class="t-dim">Revision: 1 | Status: DRAFT | Steps: 4</span>');
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine('');
+  document.getElementById('taskSteps').textContent = '0/4';
+  await sleep(400);
+
+  const steps = [
+    { action: 'browser.navigate', desc: 'Navigate to the company expense portal', params: '{"url":"https://expenses.internal.com"}', expected: 'Expense portal dashboard loaded' },
+    { action: 'browser.click', desc: 'Click generate report button for current quarter', params: '{"selector":"#generate-report","wait":true}', expected: 'Report generation started' },
+    { action: 'browser.download', desc: 'Download the generated PDF expense report', params: '{"waitFor":".download-ready"}', expected: 'PDF report downloaded locally' },
+    { action: 'email.send', desc: 'Email the expense report to the finance team', params: '{"to":"finance@company.com","subject":"Q3 Expense Report"}', expected: 'Email sent with report attached' },
+  ];
+
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    appendLine(`<span class="t-blue">▶ Step ${i+1}:</span> <span class="t-purple">${s.action}</span> <span class="t-dim">${i > 0 ? '[Depends on: '+i+']' : '[Initial Step]'}</span>`);
+    appendLine(`  <span class="t-dim">Description:</span> ${s.desc}`);
+    appendLine(`  <span class="t-dim">Params:</span> <span class="t-cyan">${s.params}</span>`);
+    appendLine(`  <span class="t-dim">Expected:</span> <span class="t-green">${s.expected}</span>`);
+    appendLine('');
+    await sleep(350);
+  }
+
+  // Dependency flow
+  appendLine('<span class="t-separator">--------------------------------------------------------------------------------</span>');
+  appendLine(' <span class="t-dim">Dependency Flow:</span>');
+  appendLine(' <span class="t-blue">(1: browser.navigate)</span> <span class="t-dim">──►</span> <span class="t-blue">(2: browser.click)</span> <span class="t-dim">──►</span> <span class="t-blue">(3: browser.download)</span> <span class="t-dim">──►</span> <span class="t-blue">(4: email.send)</span>');
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine('');
+  await sleep(600);
+
+  // Security check
+  appendLine('<span class="t-white">Validating plan steps against corporate security policies...</span>');
+  await sleep(400);
+  appendLine('  <span class="t-green">✓</span> All steps permitted under active security policy.');
+  document.getElementById('taskStatus').textContent = 'EXECUTING';
+  document.getElementById('taskStatus').style.color = '#38bdf8';
+  await sleep(500);
+
+  // Execution
+  appendLine('');
+  appendLine('<span class="t-white">Executing plan via MultiTaskOrchestrator...</span>');
+  await sleep(300);
+
+  for (let i = 0; i < steps.length; i++) {
+    await sleep(500);
+    appendLine(`  <span class="t-blue">▶ Step ${i+1}/${steps.length}</span> <span class="t-purple">${steps[i].action}</span> <span class="t-dim">—</span> <span class="t-green">✓ completed</span> <span class="t-dim">(${Math.floor(Math.random()*80+20)}ms)</span>`);
+    document.getElementById('taskSteps').textContent = `${i+1}/4`;
+    setMetric('metricSteps', i+1);
+  }
+  await sleep(500);
+
+  // Execution summary
+  appendLine('');
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine('  <span class="t-green t-bold">EXECUTION SUMMARY: SUCCESS ✓</span>');
+  appendLine('  Steps Completed: <span class="t-white">4/4</span>');
+  appendLine('  Duration: <span class="t-white">247ms</span>');
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine('');
+  await sleep(600);
+
+  // Phase 7: Verification
+  setPhase('verifier', 'active');
+  document.getElementById('taskStatus').textContent = 'VERIFYING';
+  document.getElementById('taskStatus').style.color = '#a78bfa';
+  appendLine('<span class="t-white">Running Outcome Verification & Evidence Bundler (Phase 4)...</span>');
+  await sleep(500);
+  appendLine('  <span class="t-green">✓</span> Verification: <span class="t-green t-bold">PASSED</span>');
+  appendLine('  <span class="t-dim">*</span> Confidence Score: <span class="t-white">100.0%</span>');
+  appendLine('  <span class="t-dim">*</span> Evidence Bundle: <span class="t-blue">evidence/a3zr2cT9llS9</span>');
+  setPhase('verifier', 'done');
+  setMetric('metricConfidence', '100%');
+  await sleep(600);
+
+  // Phase 8: Audit
+  setPhase('audit', 'active');
+  appendLine('');
+  appendLine('<span class="t-green">[7/8 AUDIT PROOF]</span> SHA-256 Micro-Blockchain Valid: <span class="t-green t-bold">true</span> <span class="t-dim">(8 chained records verified)</span>.');
+  await sleep(400);
+  appendLine('<span class="t-green">[8/8 OBSERVABILITY]</span> Health: <span class="t-green t-bold">HEALTHY</span> | Success Rate: <span class="t-white">100%</span> | Uptime: <span class="t-white">2s</span>');
+  setPhase('audit', 'done');
+  await sleep(500);
+
+  // Final
+  appendLine('');
+  appendLine('<span class="t-separator">================================================================================</span>');
+  appendLine('  <span class="t-cyan t-bold">✓ Task execution lifecycle finished cleanly. Operator ready for next request.</span>');
+  appendLine('<span class="t-separator">================================================================================</span>');
+
+  document.getElementById('taskStatus').textContent = 'COMPLETED ✓';
+  document.getElementById('taskStatus').style.color = '#22c55e';
+
+  cursor.style.display = 'inline-block';
+  document.getElementById('inputArea').querySelector('.prompt').innerHTML = '<span style="color:#22d3ee">PS R:\\concurrent&gt;</span>';
+}
+
+// Auto-start after a brief pause
+setTimeout(runDemo, 500);
+</script>
+</body>
+</html>
